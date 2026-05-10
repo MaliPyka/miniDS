@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Docker
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# WPF/C#
+bin/
+obj/
+*.user
+*.suo
+.vs/

@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: miniDS
+      POSTGRES_PASSWORD: miniDS123
+      POSTGRES_DB: miniDS_db
+      LANG: C
+      LC_ALL: C
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - minicord
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U miniDS -d miniDS_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://miniDS:miniDS123@postgres:5432/miniDS_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    networks:
+      - minicord
+
+networks:
+  minicord:
+
+volumes:
+  postgres_data:
