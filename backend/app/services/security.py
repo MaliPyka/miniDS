@@ -20,4 +20,3 @@ def create_access_token(data: dict) -> str:
     return jwt.encode(to_encode, secret_key, algorithm=ALGORITHM)
 
 
-
