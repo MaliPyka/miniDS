@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
-from app.schemas.user import UserData
+from app.schemas.user import TokenResponse, UserData
 from app.services import security, user_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -26,6 +26,9 @@ async def login(data: UserData, session: AsyncSession = Depends(get_session)):
     
     if not security.verify_hashed_password(data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid password")
+    
+    token = security.create_access_token({"sub": user.username})
+    return TokenResponse(access_token=token, token_type="bearer")
 
     
     

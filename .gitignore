@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 *.pyo
 .env
+pg_hba.conf
 
 # Docker
 *.log
