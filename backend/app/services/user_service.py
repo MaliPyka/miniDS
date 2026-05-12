@@ -19,4 +19,3 @@ async def get_user_by_username(session, username):
     return user
 
 
-

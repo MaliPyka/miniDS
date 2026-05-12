@@ -4,6 +4,7 @@ from app.core.database import engine, Base
 from app.api.auth import router as auth_router
 from app.api.ws import router as ws_router
 from app.models import User, Server, Channel, Message
+from app.api.rooms import router as rooms_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -14,3 +15,4 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.include_router(auth_router)
 app.include_router(ws_router)
+app.include_router(rooms_router)

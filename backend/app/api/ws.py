@@ -1,7 +1,10 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from app.core.database import async_session
+from app.services import message_service, user_service
+from app.services.security import decode_access_token
 
 
-router = APIRouter()
+router = APIRouter(prefix="/ws")
 
 class ConnectManager:
     def __init__(self):
@@ -22,13 +25,26 @@ class ConnectManager:
 manager = ConnectManager()
 
 
-@router.websocket("/ws/{username}")
-async def websocket_endpoint(websocket: WebSocket, username: str):
+@router.websocket("/{token}/{channel_id}")
+async def websocket_endpoint(websocket: WebSocket, token: str, channel_id: int):
+    user_data = decode_access_token(token)
+    username = user_data["sub"]
+    
+    async with async_session() as session:
+        user = await user_service.get_user_by_username(session, username)
+    
     await manager.connect(websocket)
     try:
         while True:
             data = await websocket.receive_text()
+            async with async_session() as session:
+                await message_service.create_message(session, channel_id, user.id, data)
             await manager.broadcast(f"{username}: {data}")
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+
+
+@router.get("/test")
+def test():
+    return {"ok": True}
 
