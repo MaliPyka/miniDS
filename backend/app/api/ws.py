@@ -34,6 +34,10 @@ async def websocket_endpoint(websocket: WebSocket, token: str, channel_id: int):
         user = await user_service.get_user_by_username(session, username)
     
     await manager.connect(websocket)
+    async with async_session() as session:
+        history = await message_service.get_messages(session, channel_id)
+        for message, username in history:
+            await websocket.send_text(f"{username}: {message.content}")
     try:
         while True:
             data = await websocket.receive_text()
