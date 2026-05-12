@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.schemas.servers import ChannelCreate, ServerCreate
-from app.services.server_service import create_channel, create_server
+from app.services.server_service import create_channel, create_server, get_channels
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
 
@@ -19,3 +19,11 @@ async def create_server_cmd(data: ServerCreate, session: AsyncSession = Depends(
 async def create_channel_cmd(data: ChannelCreate, session: AsyncSession = Depends(get_session)):
     channel = await create_channel(session, data.server_id, data.name)
     return channel
+
+
+
+@router.get("/channels/{server_id}")
+async def get_channels_cmd(server_id: int, session: AsyncSession = Depends(get_session)):
+    channels = await get_channels(session, server_id)
+    return channels
+

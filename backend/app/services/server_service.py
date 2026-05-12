@@ -1,3 +1,5 @@
+from sqlalchemy import select
+
 from app.models.server import Server, Channel
 
 
@@ -15,3 +17,8 @@ async def create_channel(session, server_id, name):
     await session.commit()
     await session.refresh(channel)
     return channel
+
+
+async def get_channels(session, server_id):
+    channels = await session.execute(select(Channel).where(Channel.server_id == server_id))
+    return channels.scalars().all()

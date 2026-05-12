@@ -7,18 +7,34 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="50"/>
-        </Grid.RowDefinitions>
-        <ListBox x:Name="MessagesList"  Grid.Row="0"/>
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="80"/>
-            </Grid.ColumnDefinitions>
-            <TextBox x:Name="MessageInput" Grid.Column="0" KeyDown="MessageInput_KeyDown"/>
-            <Button x:Name="SendButton" Grid.Column="1" Click="SendButton_Click" Content="Отправить"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Левая панель -->
+        <Grid Grid.Column="0" Background="#2f3136">
+            <StackPanel>
+                <Button Content="+ Создать канал" Margin="8"/>
+                <ListBox x:Name="ChannelsList" Background="Transparent"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Правая панель - твой существующий код -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="50"/>
+            </Grid.RowDefinitions>
+            <ListBox x:Name="MessagesList" Grid.Row="0"/>
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="80"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="MessageInput" Grid.Column="0" KeyDown="MessageInput_KeyDown"/>
+                <Button x:Name="SendButton" Grid.Column="1" Click="SendButton_Click" Content="Отправить"/>
+            </Grid>
         </Grid>
     </Grid>
 </Window>
