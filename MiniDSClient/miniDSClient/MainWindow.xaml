@@ -23,10 +23,13 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Grid.Column="0"/>
-
-                                <Button x:Name="DeleteChannelButton" Content="x" Background="Transparent" Click="DeleteChannelButton_Click" Foreground="Red" Grid.Column="1" Width="15" BorderThickness="0"/>
+                                <Button Content="+" Background="Transparent" Click="AddUserButton_Click" 
+                    Grid.Column="1" Width="15" BorderThickness="0" Foreground="Green"/>
+                                <Button Content="x" Background="Transparent" Click="DeleteChannelButton_Click" 
+                    Foreground="Red" Grid.Column="2" Width="15" BorderThickness="0"/>
                             </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>

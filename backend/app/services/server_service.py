@@ -1,6 +1,6 @@
 from sqlalchemy import delete, select
 
-from app.models.server import Server, Channel
+from app.models.server import Server, Channel, Membership
 
 
 async def create_server(session, name, owner_id):
@@ -19,8 +19,8 @@ async def create_channel(session, server_id, name, owner_id):
     return channel
 
 
-async def get_channels(session, server_id):
-    channels = await session.execute(select(Channel).where(Channel.server_id == server_id))
+async def get_channels(session, server_id, user_id):
+    channels = await session.execute(select(Channel).join(Membership, Membership.channel_id == Channel.id).where(Channel.server_id == server_id, Membership.user_id == user_id))
     return channels.scalars().all()
 
 
