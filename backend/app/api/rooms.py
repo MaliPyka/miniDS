@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.schemas.servers import ChannelCreate, ServerCreate
-from app.services.server_service import create_channel, create_server, get_channels
+from app.services.server_service import create_channel, create_server, get_channels, delete_channel, get_channel
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
 
@@ -27,3 +27,20 @@ async def get_channels_cmd(server_id: int, session: AsyncSession = Depends(get_s
     channels = await get_channels(session, server_id)
     return channels
 
+
+@router.delete("/delete_channels/{channel_id}")
+async def delete_channels_cmd(channel_id: int, session: AsyncSession = Depends(get_session)):
+    if not await get_channel(session, channel_id):
+        raise HTTPException(
+            status_code=400,
+            detail="Канал не найден"
+        )
+
+    try:
+        await delete_channel(session, channel_id)
+        return {"message": "deleted"}
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Не удалось удалить: {str(val_err)}"
+        )

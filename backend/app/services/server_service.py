@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.models.server import Server, Channel
 
@@ -22,3 +22,15 @@ async def create_channel(session, server_id, name):
 async def get_channels(session, server_id):
     channels = await session.execute(select(Channel).where(Channel.server_id == server_id))
     return channels.scalars().all()
+
+
+async def delete_channel(session, channel_id):
+    stmt = delete(Channel).where(Channel.id == channel_id)
+    await session.execute(stmt)
+    await session.commit()
+
+
+async def get_channel(session, channel_id):
+    channel = await session.execute(select(Channel).where(Channel.id == channel_id))
+    result = channel.scalar_one_or_none()
+    return result

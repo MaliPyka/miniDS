@@ -19,6 +19,6 @@ class Channel(Base):
     __tablename__ = 'channels'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    server_id: Mapped[int] = mapped_column(ForeignKey("servers.id"))
+    server_id: Mapped[int] = mapped_column(ForeignKey("servers.id", ondelete="CASCADE"))
     name: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

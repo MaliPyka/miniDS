@@ -11,12 +11,10 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Microsoft.VisualBasic;
 
 namespace miniDSClient
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     
     public class ChannelItem
     {
@@ -42,22 +40,30 @@ namespace miniDSClient
                 CancellationToken.None
             );
             await ReceiveMessages();
-            
+
+
         }
 
         private ClientWebSocket _websocket = new ClientWebSocket();
-        private string _token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJweXBhIiwiZXhwIjoxNzc4NjY5ODk0fQ.FWABasagKUN8RAfGO1q_yYMZZIjdAzQJK5rEMNa5gy0";
+        private string _token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJweXBhIiwiZXhwIjoxNzc4OTQzMTkwfQ.W4DydOTPGClktZbILUT855ettrwXLnQ_fIqkxOKN4qo";
         private int _channelId = 1;
         private HttpClient _httpClient = new HttpClient();
 
         private async Task ReceiveMessages()
         {
-            while (true)
+            try
             {
-                var buffer = new byte[1024];
-                var result = await _websocket.ReceiveAsync(buffer, CancellationToken.None);
-                var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                MessagesList.Items.Add(message);
+                while (true)
+                {
+                    var buffer = new byte[1024];
+                    var result = await _websocket.ReceiveAsync(buffer, CancellationToken.None);
+                    var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                    MessagesList.Items.Add(message);
+                }
+            }
+            catch
+            {
+
             }
         }
 
@@ -88,6 +94,62 @@ namespace miniDSClient
                 SendButton_Click(sender, e);
         }
 
-        
+
+        private async void ChannelsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ChannelsList.SelectedItem is ChannelItem selected)
+            {
+                _channelId = selected.Id;
+
+                try
+                {
+                    if (_websocket.State == WebSocketState.Open)
+                    {
+                        await _websocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "switching channel", CancellationToken.None);
+                    }
+                }
+                catch { }
+
+                _websocket = new ClientWebSocket();
+                MessagesList.Items.Clear();
+
+                await _websocket.ConnectAsync(
+                    new Uri($"ws://localhost:8000/ws/{_token}/{_channelId}"),
+                    CancellationToken.None
+                );
+
+                _ = ReceiveMessages();
+            }
+        }
+
+        private async void CreateChannelButton_Click(object sender, RoutedEventArgs e)
+        {
+            string name = Interaction.InputBox("Введите название канала", "Новый канал", "");
+            if (string.IsNullOrEmpty(name)) return;
+
+            var json = JsonSerializer.Serialize(new { name, server_id = 1 });
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsync("http://localhost:8000/rooms/create_channel", content);
+
+            ChannelsList.Items.Clear();
+            await LoadChannels();
+        }
+
+
+        private async void DeleteChannelButton_Click(object sender, RoutedEventArgs e)
+        {
+            var button = (Button)sender;
+            if (button == null) return;
+
+            var clickedChannel = button.DataContext as ChannelItem;
+
+            if (clickedChannel != null)
+            {
+                int index = clickedChannel.Id;
+                var response = await _httpClient.DeleteAsync($"http://localhost:8000/rooms/delete_channels/{index}");
+                ChannelsList.Items.Clear();
+                await LoadChannels();
+            }
+        }
     }
 }
