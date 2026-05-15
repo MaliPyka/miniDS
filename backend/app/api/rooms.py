@@ -4,6 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.schemas.servers import ChannelCreate, ServerCreate
 from app.services.server_service import create_channel, create_server, get_channels, delete_channel, get_channel
+from app.services.security import decode_access_token
+from app.services.user_service import get_user_by_username
+from app.services.memberships_service import add_member
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
 
@@ -17,7 +20,10 @@ async def create_server_cmd(data: ServerCreate, session: AsyncSession = Depends(
 
 @router.post("/create_channel")
 async def create_channel_cmd(data: ChannelCreate, session: AsyncSession = Depends(get_session)):
-    channel = await create_channel(session, data.server_id, data.name)
+    user_data = decode_access_token(data.token)
+    user = await get_user_by_username(session, user_data["sub"])
+    channel = await create_channel(session, data.server_id, data.name, user.id)
+    await add_member(session, user.id, channel.id)
     return channel
 
 

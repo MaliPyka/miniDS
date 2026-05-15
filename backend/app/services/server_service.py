@@ -11,8 +11,8 @@ async def create_server(session, name, owner_id):
     return server
 
 
-async def create_channel(session, server_id, name):
-    channel = Channel(server_id = server_id, name = name)
+async def create_channel(session, server_id, name, owner_id):
+    channel = Channel(server_id = server_id, name = name, owner_id = owner_id)
     session.add(channel)
     await session.commit()
     await session.refresh(channel)

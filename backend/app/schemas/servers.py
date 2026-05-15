@@ -7,3 +7,4 @@ class ServerCreate(BaseModel):
 class ChannelCreate(BaseModel):
     name: str
     server_id: int
+    token: str
