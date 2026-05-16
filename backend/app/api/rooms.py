@@ -62,3 +62,5 @@ async def add_member_cmd(data: AddMember, session: AsyncSession = Depends(get_se
     
     await add_member(session, user.id, data.channel_id)
     return {"message": f"User: {data.username} added!"}
+
+

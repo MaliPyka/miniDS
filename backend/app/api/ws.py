@@ -50,6 +50,8 @@ async def websocket_endpoint(websocket: WebSocket, token: str, channel_id: int):
         history = await message_service.get_messages(session, channel_id)
         for message, username in history:
             await websocket.send_text(f"{username}: {message.content}")
+        members = await memberships_service.get_channel_members(session, channel_id)
+        await websocket.send_text(f"MEMBERS:{','.join(members)}")
     try:
         while True:
             data = await websocket.receive_text()

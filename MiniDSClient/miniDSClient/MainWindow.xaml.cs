@@ -1,11 +1,12 @@
-﻿using System.Net.Http;
-using System.Text.Json;
+﻿using Microsoft.VisualBasic;
+using System.Net.Http;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Microsoft.VisualBasic;
+using System.Windows.Media;
 
 namespace miniDSClient
 {
@@ -19,7 +20,7 @@ namespace miniDSClient
     public partial class MainWindow : Window
     {
         private ClientWebSocket _websocket = new ClientWebSocket();
-        private string _token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJweXBhIiwiZXhwIjoxNzc4OTYxNTU3fQ.3nqyIku3shFh1DZ09HsPVgoQwzN9qvfpHHK8W-AJT-Y";
+        private string _token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3Nzg5NTExNTZ9.J2lGzFvZvXP6HPJ5BjJb6t4_0fvECBEwff4A0eSPtCU";
         private int _channelId = 1;
         private HttpClient _httpClient = new HttpClient();
         private bool _isLoadingChannels = false;
@@ -72,10 +73,22 @@ namespace miniDSClient
             {
                 while (true)
                 {
-                    var buffer = new byte[1024];
+                    var buffer = new byte[4096];
                     var result = await _websocket.ReceiveAsync(buffer, CancellationToken.None);
                     var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    MessagesList.Items.Add(message);
+
+                    if (message.StartsWith("MEMBERS:"))
+                    {
+                        var members = message.Replace("MEMBERS:", "").Split(',');
+                        Dispatcher.Invoke(() =>
+                        {
+                            MembersCount.Text = $"{members.Length} участников";
+                        });
+                    }
+                    else
+                    {
+                        Dispatcher.Invoke(() => MessagesList.Items.Add(message));
+                    }
                 }
             }
             catch { }
@@ -105,6 +118,7 @@ namespace miniDSClient
 
             _isConnecting = true;
             _channelId = selected.Id;
+            ChannelTitle.Text = selected.Name;
 
             try
             {
@@ -160,6 +174,37 @@ namespace miniDSClient
             var json = JsonSerializer.Serialize(new { username = name, channel_id = clickedChannel.Id });
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             await _httpClient.PostAsync("http://localhost:8000/rooms/add_member", content);
+        }
+
+
+        private void ChannelItem_MouseEnter(object sender, MouseEventArgs e)
+        {
+            var item = (ListBoxItem)sender;
+            var grid = FindVisualChild<Grid>(item);
+            if (grid == null) return;
+            foreach (var btn in grid.Children.OfType<Button>())
+                btn.Opacity = 1;
+        }
+
+        private void ChannelItem_MouseLeave(object sender, MouseEventArgs e)
+        {
+            var item = (ListBoxItem)sender;
+            var grid = FindVisualChild<Grid>(item);
+            if (grid == null) return;
+            foreach (var btn in grid.Children.OfType<Button>())
+                btn.Opacity = 0;
+        }
+
+        private T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T result) return result;
+                var found = FindVisualChild<T>(child);
+                if (found != null) return found;
+            }
+            return null;
         }
     }
 }
