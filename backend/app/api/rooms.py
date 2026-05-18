@@ -6,7 +6,9 @@ from app.schemas.servers import ChannelCreate, ServerCreate, AddMember
 from app.services.server_service import create_channel, create_server, get_channels, delete_channel, get_channel
 from app.services.security import decode_access_token
 from app.services.user_service import get_user_by_username
-from app.services.memberships_service import add_member
+from app.services.memberships_service import add_member, is_member
+from app.api.ws import manager
+from app.services.memberships_service import get_channel_members
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
 
@@ -60,7 +62,15 @@ async def add_member_cmd(data: AddMember, session: AsyncSession = Depends(get_se
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
     
+    if await is_member(session, user.id, data.channel_id):
+        return {"message": f"user: {data.username} has already been added"}
+
+
     await add_member(session, user.id, data.channel_id)
+
+    members = await get_channel_members(session, data.channel_id)
+    await manager.broadcast(f"MEMBERS:{','.join(members)}", data.channel_id)
+
     return {"message": f"User: {data.username} added!"}
 
 

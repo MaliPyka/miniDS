@@ -20,13 +20,14 @@ namespace miniDSClient
     public partial class MainWindow : Window
     {
         private ClientWebSocket _websocket = new ClientWebSocket();
-        private string _token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3Nzg5NTExNTZ9.J2lGzFvZvXP6HPJ5BjJb6t4_0fvECBEwff4A0eSPtCU";
+        private string _token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3NzkxMTYxNDJ9.CngQazlgZqDraXIhkj3UXepMZjfLELDCELRIE91REew";
+        private string _username = "pypa";
         private int _channelId = 1;
         private HttpClient _httpClient = new HttpClient();
         private bool _isLoadingChannels = false;
 
-        // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJweXBhIiwiZXhwIjoxNzc4OTYxNTU3fQ.3nqyIku3shFh1DZ09HsPVgoQwzN9qvfpHHK8W-AJT-Y pypa
-        // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3Nzg5NTExNTZ9.J2lGzFvZvXP6HPJ5BjJb6t4_0fvECBEwff4A0eSPtCU string
+        // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJweXBhIiwiZXhwIjoxNzc5MTE2MTI3fQ.lHuygM8UMgtoY2tfSQIW17GB9So4TzmjQdOgRowakbc pypa
+        // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3NzkxMTYxNDJ9.CngQazlgZqDraXIhkj3UXepMZjfLELDCELRIE91REew string
         public MainWindow()
         {
             InitializeComponent();
@@ -40,6 +41,8 @@ namespace miniDSClient
             {
                 ChannelsList.SelectedIndex = 0;
             }
+            CurrentUsername.Text = _username;
+            AvatarLetter.Text = _username[0].ToString().ToUpper();
         }
 
         private async Task LoadChannels()
@@ -82,7 +85,7 @@ namespace miniDSClient
                         var members = message.Replace("MEMBERS:", "").Split(',');
                         Dispatcher.Invoke(() =>
                         {
-                            MembersCount.Text = $"{members.Length} участников";
+                            MembersCount.Text = $"{members.Length} members";
                         });
                     }
                     else
@@ -138,6 +141,7 @@ namespace miniDSClient
             _isConnecting = false;
             _ = ReceiveMessages();
         }
+
 
         private async void CreateChannelButton_Click(object sender, RoutedEventArgs e)
         {
@@ -205,6 +209,11 @@ namespace miniDSClient
                 if (found != null) return found;
             }
             return null;
+        }
+
+        private void VoiceButton_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Голосовой чат пока не реализован");
         }
     }
 }

@@ -21,3 +21,4 @@ async def is_member(session, user_id, channel_id) -> bool:
 async def get_channel_members(session, channel_id):
     result = await session.execute(select(User.username).join(Membership, Membership.user_id == User.id).where(Membership.channel_id == channel_id))
     return result.scalars().all()
+
