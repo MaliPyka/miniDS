@@ -8,4 +8,24 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Livekit.Server.Sdk.Dotnet" Version="1.2.1" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3967.48" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="livekit-client.umd.min.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="voice.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="Microsoft.VisualBasic"/>
+	</ItemGroup>	
+	
+	
+
 </Project>

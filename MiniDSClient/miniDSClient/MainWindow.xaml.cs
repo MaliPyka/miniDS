@@ -1,4 +1,7 @@
-﻿using Microsoft.VisualBasic;
+﻿using Livekit.Server.Sdk.Dotnet;
+using Microsoft.VisualBasic;
+using Microsoft.Web.WebView2.Core;
+using Newtonsoft.Json.Linq;
 using System.Net.Http;
 using System.Net.WebSockets;
 using System.Text;
@@ -17,21 +20,42 @@ namespace miniDSClient
         public override string ToString() => Name;
     }
 
+    public class VoiceParticipant
+    {
+        public string Name { get; set; }
+        public string Letter { get; set; }
+    }
+
     public partial class MainWindow : Window
     {
         private ClientWebSocket _websocket = new ClientWebSocket();
-        private string _token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3NzkxMTYxNDJ9.CngQazlgZqDraXIhkj3UXepMZjfLELDCELRIE91REew";
-        private string _username = "pypa";
+        private string _username = "string";
+        private bool _muted = false;
+        private string _token = "";
         private int _channelId = 1;
         private HttpClient _httpClient = new HttpClient();
         private bool _isLoadingChannels = false;
+        private Room _voiceRoom = new Room();
+        private bool _inVoice = false;
 
-        // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJweXBhIiwiZXhwIjoxNzc5MTE2MTI3fQ.lHuygM8UMgtoY2tfSQIW17GB9So4TzmjQdOgRowakbc pypa
-        // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3NzkxMTYxNDJ9.CngQazlgZqDraXIhkj3UXepMZjfLELDCELRIE91REew string
+
+        // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJweXBhIiwiZXhwIjoxNzc5NTM0OTQ0fQ.7h4NpVeSkX8Nq_lzekiWNsVWFreyMmjosxovE001txM pypa
+        // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3Nzk0NjU3ODN9.B9QPJboyZUH6jON2NrYFAd5gswkpiCbGDXGF8PAb8T8 string
         public MainWindow()
         {
             InitializeComponent();
-            StartAsync();
+
+            var login = new LoginWindow();
+            if (login.ShowDialog() == true)
+            {
+                _username = login.Username;
+                _token = login.Token;
+                StartAsync();
+            }
+            else
+            {
+                Close();
+            }
         }
 
         private async void StartAsync()
@@ -43,6 +67,73 @@ namespace miniDSClient
             }
             CurrentUsername.Text = _username;
             AvatarLetter.Text = _username[0].ToString().ToUpper();
+
+            var env = await CoreWebView2Environment.CreateAsync(null, null,
+                new CoreWebView2EnvironmentOptions(
+                    "--unsafely-treat-insecure-origin-as-secure=http://localfiles --allow-running-insecure-content"
+                ));
+            await VoiceWebView.EnsureCoreWebView2Async(env);
+
+            VoiceWebView.CoreWebView2.PermissionRequested += (s, e) =>
+            {
+                e.State = CoreWebView2PermissionState.Allow;
+            };
+
+            VoiceWebView.CoreWebView2.SetVirtualHostNameToFolderMapping(
+                "localfiles",
+                AppDomain.CurrentDomain.BaseDirectory,
+                Microsoft.Web.WebView2.Core.CoreWebView2HostResourceAccessKind.Allow
+            );
+
+            VoiceWebView.Source = new Uri("http://localfiles/voice.html");
+
+            VoiceWebView.CoreWebView2.WebMessageReceived += (s, e) =>
+            {
+                var message = e.TryGetWebMessageAsString();
+                System.Diagnostics.Debug.WriteLine("VOICE MSG: " + message);
+
+                if (message.StartsWith("ERROR:"))
+                {
+                    Dispatcher.Invoke(() => MessageBox.Show("Ошибка голоса: " + message.Replace("ERROR:", "")));
+                    return;
+                }
+
+                Dispatcher.Invoke(() =>
+                {
+                    if (message == "CONNECTED")
+                    {
+                        VoiceButton.Content = "🔴";
+                    }
+                    else if (message == "DISCONNECTED")
+                    {
+                        VoiceButton.Content = "📞";
+                    }
+                    else if (message.StartsWith("JOINED:") || message.StartsWith("ALREADY:") || message.StartsWith("EVENT:"))
+                    {
+                        var name = message.StartsWith("JOINED:") ? message.Replace("JOINED:", "") :
+                                   message.StartsWith("ALREADY:") ? message.Replace("ALREADY:", "") : null;
+
+                        if (name != null)
+                        {
+                            if (VoiceParticipantsList.Items.Cast<VoiceParticipant>().Any(p => p.Name == name))
+                                return;
+                            VoiceParticipantsList.Items.Add(new VoiceParticipant
+                            {
+                                Name = name,
+                                Letter = name[0].ToString().ToUpper()
+                            });
+                        }
+                    }
+                    else if (message.StartsWith("LEFT:"))
+                    {
+                        var name = message.Replace("LEFT:", "");
+                        var item = VoiceParticipantsList.Items.Cast<VoiceParticipant>()
+                            .FirstOrDefault(p => p.Name == name);
+                        if (item != null)
+                            VoiceParticipantsList.Items.Remove(item);
+                    }
+                });
+            };
         }
 
         private async Task LoadChannels()
@@ -211,9 +302,43 @@ namespace miniDSClient
             return null;
         }
 
-        private void VoiceButton_Click(object sender, RoutedEventArgs e)
+        private async void VoiceButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Голосовой чат пока не реализован");
+            if (!_inVoice)
+            {
+                _inVoice = true;
+                VoicePanelRow.Height = new GridLength(120);
+                VoiceParticipantsList.Items.Clear();
+                VoiceParticipantsList.Items.Add(new VoiceParticipant
+                {
+                    Name = _username,
+                    Letter = _username[0].ToString().ToUpper()
+                });
+
+                var response = await _httpClient.GetAsync($"http://localhost:8000/voice/token/{_channelId}/{_username}");
+                var json = await response.Content.ReadAsStringAsync();
+                var doc = System.Text.Json.JsonDocument.Parse(json);
+                var token = doc.RootElement.GetProperty("token").GetString();
+
+                await VoiceWebView.CoreWebView2.ExecuteScriptAsync(
+                    $"joinVoice('ws://localhost:7880', '{token}')");
+            }
+            else
+            {
+                _inVoice = false;
+                VoicePanelRow.Height = new GridLength(0);
+                VoiceParticipantsList.Items.Clear();
+                await VoiceWebView.CoreWebView2.ExecuteScriptAsync("leaveVoice()");
+                VoiceButton.Content = "📞";
+            }
+        }
+
+        private async void MuteButton_Click(object sender, RoutedEventArgs e)
+        {
+            _muted = !_muted;
+            MuteButton.Content = _muted ? "🔇 Размут" : "🎤 Мут";
+            await VoiceWebView.CoreWebView2.ExecuteScriptAsync(
+                $"room.localParticipant.setMicrophoneEnabled({(_muted ? "false" : "true")})");
         }
     }
 }

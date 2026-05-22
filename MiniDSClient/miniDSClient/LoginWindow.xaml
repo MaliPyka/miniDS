@@ -1,0 +1,33 @@
+﻿<Window x:Class="miniDSClient.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MiniDS" Height="440" Width="724"
+        Background="#36393f"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize">
+    <StackPanel Margin="40">
+        <TextBlock Text="MiniDS" Foreground="White" FontSize="24" FontWeight="Bold" 
+                   HorizontalAlignment="Center" Margin="0,0,0,24"/>
+
+        <TextBlock Text="Имя пользователя" Foreground="#b9bbbe" FontSize="12" Margin="0,0,0,4"/>
+        <TextBox x:Name="UsernameBox" Height="40" Background="#40444b" Foreground="White"
+                 BorderThickness="0" Padding="10,0" FontSize="14" CaretBrush="White"
+                 VerticalContentAlignment="Center" Margin="0,0,0,12"/>
+
+        <TextBlock Text="Пароль" Foreground="#b9bbbe" FontSize="12" Margin="0,0,0,4"/>
+        <PasswordBox x:Name="PasswordBox" Height="40" Background="#40444b" Foreground="White"
+                     BorderThickness="0" Padding="10,0" FontSize="14"
+                     VerticalContentAlignment="Center" Margin="0,0,0,20"/>
+
+        <Button x:Name="LoginBtn" Content="Войти" Height="40" Background="#5865f2"
+                Foreground="White" BorderThickness="0" FontSize="14" FontWeight="Bold"
+                Cursor="Hand" Click="LoginBtn_Click" Margin="0,0,0,8"/>
+
+        <Button x:Name="RegisterBtn" Content="Зарегистрироваться" Height="40" Background="#3ba55d"
+                Foreground="White" BorderThickness="0" FontSize="14" FontWeight="Bold"
+                Cursor="Hand" Click="RegisterBtn_Click"/>
+
+        <TextBlock x:Name="ErrorText" Foreground="#ed4245" FontSize="12" 
+                   HorizontalAlignment="Center" Margin="0,12,0,0" TextWrapping="Wrap"/>
+    </StackPanel>
+</Window>

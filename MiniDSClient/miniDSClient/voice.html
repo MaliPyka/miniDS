@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <script src="http://localfiles/livekit-client.umd.min.js"></script>
+</head>
+<body>
+<script>
+    let room = null;
+
+    async function joinVoice(url, token) {
+        try {
+            room = new LivekitClient.Room({
+                audioCaptureDefaults: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                },
+                publishDefaults: {
+                    audioPreset: LivekitClient.AudioPresets.music,
+                }
+            });
+
+            room.on(LivekitClient.RoomEvent.ParticipantConnected, (participant) => {
+                window.chrome.webview.postMessage('JOINED:' + participant.identity);
+            });
+
+            room.on(LivekitClient.RoomEvent.ParticipantDisconnected, (participant) => {
+                window.chrome.webview.postMessage('LEFT:' + participant.identity);
+            });
+
+            room.on(LivekitClient.RoomEvent.TrackSubscribed, (track, publication, participant) => {
+                if (track.kind === 'audio') {
+                    const audioEl = track.attach();
+                    audioEl.autoplay = true;
+                    document.body.appendChild(audioEl);
+                }
+            });
+
+            room.on(LivekitClient.RoomEvent.TrackUnsubscribed, (track) => {
+                track.detach().forEach(el => el.remove());
+            });
+
+            await room.connect(url, token);
+            await room.localParticipant.setMicrophoneEnabled(true);
+
+            room.remoteParticipants.forEach((participant) => {
+                window.chrome.webview.postMessage('JOINED:' + participant.identity);
+            });
+
+            window.chrome.webview.postMessage('CONNECTED');
+        } catch(e) {
+            window.chrome.webview.postMessage('ERROR:' + e.message);
+        }
+    }
+
+    async function leaveVoice() {
+        if (room) { await room.disconnect(); room = null; }
+        window.chrome.webview.postMessage('DISCONNECTED');
+    }
+</script>
+</body>
+</html>
